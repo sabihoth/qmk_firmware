@@ -7,20 +7,20 @@ extern keymap_config_t keymap_config;
 #define _QWERTY 0
 #define _COLEMAK 1
 #define _DVORAK 2
-#define _LOWER 3
-#define _RAISE 4
-#define _FN3 5
-#define _FN4 6
+#define _BABY 3
+#define _LOWER 4
+#define _RAISE 5
+#define _FN3 6
 #define _ADJUST 16
 
 enum custom_keycodes {
   QWERTY = SAFE_RANGE,
   COLEMAK,
   DVORAK,
+  BABY,
   LOWER,
   RAISE,
   FN3,
-  FN4,
   ADJUST,
 };
 
@@ -75,6 +75,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   //`----+----+----+----+----+----'    `----+----+----+----+----+----'
   ),
 
+  // Baby mode, make any keypress change the RGB animation
+  [_BABY] = KEYMAP( \
+    RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, \
+    RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, \
+    RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, \
+    RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD, _______, KC_NO,   KC_NO,   _______, RGB_MOD, RGB_MOD, RGB_MOD, RGB_MOD \
+  ),
+
   [_LOWER] = KC_KEYMAP(
   //,----+----+----+----+----+----.    ,----+----+----+----+----+----.
          , 1  , 2  , 3  , 4  , 5  ,      6  , 7  , 8  , 9  , 0  ,    ,
@@ -114,18 +122,18 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 /* Adjust (Lower + Raise)
  * ,-----------------------------------------------------------------------------------.
  * |      | Reset|RGB Tg|RGB Md|Hue Up|Hue Dn|Sat Up|Sat Dn|Val Up|Val Dn|      |      |
- * |------+------+------+------+------+-------------+------+------+------+------+------|
- * |      |      |      |Aud on|Audoff|AGnorm|AGswap|Qwerty|Colemk|Dvorak|      |      |
- * |------+------+------+------+------+------|------+------+------+------+------+------|
- * |      |      |      |      |      |      |      |      |      |      |      |      |
  * |------+------+------+------+------+------+------+------+------+------+------+------|
- * |      |      |      |      |      |             |      |      |      |      |      |
+ * |      |      |      |Aud on|Audoff|AGnorm|AGswap|Qwerty|Colemk|Dvorak|      |      |
+ * |------+------+------+------+------+------+------+------+------+------+------+------|
+ * |      |      |      |      |      | Baby |      |      |      |      |      |      |
+ * |------+------+------+------+------+------+------+------+------+------+------+------|
+ * |      |      |      |      |      |      |      |      |      |      |      |      |
  * `-----------------------------------------------------------------------------------'
  */
   [_ADJUST] = KEYMAP( \
     _______, RESET  , RGB_TOG, RGB_MOD, RGB_HUD, RGB_HUI, RGB_SAD, RGB_SAI, RGB_VAD, RGB_VAI, _______, _______, \
     _______, _______, _______, AU_ON,   AU_OFF,  AG_NORM, AG_SWAP, QWERTY,  COLEMAK, DVORAK,  _______, _______, \
-    _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+    _______, _______, _______, _______, _______, BABY,    _______, _______, _______, _______, _______, _______, \
     _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______ \
   )
 
@@ -169,6 +177,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
           PLAY_NOTE_ARRAY(tone_dvorak, false, 0);
         #endif
         persistant_default_layer_set(1UL<<_DVORAK);
+      }
+      return false;
+      break;
+    case BABY:
+      if (record->event.pressed) {
+        persistant_default_layer_set(1UL<<_BABY);
       }
       return false;
       break;
