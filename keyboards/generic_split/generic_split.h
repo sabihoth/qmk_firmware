@@ -1,5 +1,5 @@
-#ifndef NYQUIST_H
-#define NYQUIST_H
+#ifndef GENERIC_SPLIT_H
+#define GENERIC_SPLIT_H
 
 #ifdef SUBPROJECT_rev1
     #include "rev1.h"

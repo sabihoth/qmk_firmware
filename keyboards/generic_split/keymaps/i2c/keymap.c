@@ -1,4 +1,4 @@
-#include "nyquist.h"
+#include "generic_split.h"
 #include "action_layer.h"
 #include "eeconfig.h"
 

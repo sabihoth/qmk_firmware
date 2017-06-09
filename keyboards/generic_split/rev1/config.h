@@ -21,12 +21,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "config_common.h"
 
 /* USB Device descriptor parameter */
-#define VENDOR_ID       0xCEEB
+#define VENDOR_ID       0x5117
 #define PRODUCT_ID      0x1156
 #define DEVICE_VER      0x0100
-#define MANUFACTURER    Keebio
-#define PRODUCT         The Nyquist Keyboard
-#define DESCRIPTION     Split 60 percent ortholinear keyboard
+#define MANUFACTURER    Split Designer
+#define PRODUCT         Generic Split Keyboard
+#define DESCRIPTION     A split keyboard
 
 /* key matrix size */
 // Rows are doubled-up
