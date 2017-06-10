@@ -10,6 +10,7 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include <stdbool.h>
+#include "matrix.h"
 #include "serial.h"
 
 #ifdef USE_SERIAL
@@ -18,8 +19,8 @@
 // value.
 #define SERIAL_DELAY 24
 
-uint8_t volatile serial_slave_buffer[SERIAL_SLAVE_BUFFER_LENGTH] = {0};
-uint8_t volatile serial_master_buffer[SERIAL_MASTER_BUFFER_LENGTH] = {0};
+matrix_row_t volatile serial_slave_buffer[SERIAL_SLAVE_BUFFER_LENGTH] = {0};
+matrix_row_t volatile serial_master_buffer[SERIAL_MASTER_BUFFER_LENGTH] = {0};
 
 #define SLAVE_DATA_CORRUPT (1<<0)
 volatile uint8_t status = 0;
@@ -42,7 +43,7 @@ void serial_input(void) {
 }
 
 inline static
-uint8_t serial_read_pin(void) {
+matrix_row_t serial_read_pin(void) {
   return !!(SERIAL_PIN_INPUT & SERIAL_PIN_MASK);
 }
 
@@ -91,26 +92,26 @@ void sync_send(void) {
   serial_high();
 }
 
-// Reads a byte from the serial line
+// Reads a row from the serial line
 static
-uint8_t serial_read_byte(void) {
-  uint8_t byte = 0;
+matrix_row_t serial_read_row(void) {
+  matrix_row_t row = 0;
   serial_input();
-  for ( uint8_t i = 0; i < 8; ++i) {
-    byte = (byte << 1) | serial_read_pin();
+  for (uint8_t i = 0; i < MATRIX_COLS; ++i) {
+    row = (row << 1) | serial_read_pin();
     serial_delay();
     _delay_us(1);
   }
 
-  return byte;
+  return row;
 }
 
-// Sends a byte with MSB ordering
+// Sends a row with MSB ordering
 static
-void serial_write_byte(uint8_t data) {
-  uint8_t b = 8;
+void serial_write_row(matrix_row_t data) {
+  uint8_t b = MATRIX_COLS;
   serial_output();
-  while( b-- ) {
+  while(b--) {
     if(data & (1 << b)) {
       serial_high();
     } else {
@@ -124,13 +125,13 @@ void serial_write_byte(uint8_t data) {
 ISR(SERIAL_PIN_INTERRUPT) {
   sync_send();
 
-  uint8_t checksum = 0;
+  matrix_row_t checksum = 0;
   for (int i = 0; i < SERIAL_SLAVE_BUFFER_LENGTH; ++i) {
-    serial_write_byte(serial_slave_buffer[i]);
+    serial_write_row(serial_slave_buffer[i]);
     sync_send();
     checksum += serial_slave_buffer[i];
   }
-  serial_write_byte(checksum);
+  serial_write_row(checksum);
   sync_send();
 
   // wait for the sync to finish sending
@@ -139,13 +140,13 @@ ISR(SERIAL_PIN_INTERRUPT) {
   // read the middle of pulses
   _delay_us(SERIAL_DELAY/2);
 
-  uint8_t checksum_computed = 0;
+  matrix_row_t checksum_computed = 0;
   for (int i = 0; i < SERIAL_MASTER_BUFFER_LENGTH; ++i) {
-    serial_master_buffer[i] = serial_read_byte();
+    serial_master_buffer[i] = serial_read_row();
     sync_send();
     checksum_computed += serial_master_buffer[i];
   }
-  uint8_t checksum_received = serial_read_byte();
+  matrix_row_t checksum_received = serial_read_row();
   sync_send();
 
   serial_input(); // end transaction
@@ -192,14 +193,14 @@ int serial_update_buffers(void) {
   // if the slave is present syncronize with it
   sync_recv();
 
-  uint8_t checksum_computed = 0;
+  matrix_row_t checksum_computed = 0;
   // receive data from the slave
   for (int i = 0; i < SERIAL_SLAVE_BUFFER_LENGTH; ++i) {
-    serial_slave_buffer[i] = serial_read_byte();
+    serial_slave_buffer[i] = serial_read_row();
     sync_recv();
     checksum_computed += serial_slave_buffer[i];
   }
-  uint8_t checksum_received = serial_read_byte();
+  matrix_row_t checksum_received = serial_read_row();
   sync_recv();
 
   if (checksum_computed != checksum_received) {
@@ -207,14 +208,14 @@ int serial_update_buffers(void) {
     return 1;
   }
 
-  uint8_t checksum = 0;
+  matrix_row_t checksum = 0;
   // send data to the slave
   for (int i = 0; i < SERIAL_MASTER_BUFFER_LENGTH; ++i) {
-    serial_write_byte(serial_master_buffer[i]);
+    serial_write_row(serial_master_buffer[i]);
     sync_recv();
     checksum += serial_master_buffer[i];
   }
-  serial_write_byte(checksum);
+  serial_write_row(checksum);
   sync_recv();
 
   // always, release the line when not in use
